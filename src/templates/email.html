@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo mensaje de contacto</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td style="padding: 20px 0;">
+                <table role="presentation" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                    
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 40px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                💼 Nuevo Mensaje de Contacto
+                            </h1>
+                            <p style="margin: 8px 0 0 0; color: #e8eaff; font-size: 16px; opacity: 0.9;">
+                                Alguien está interesado en trabajar contigo
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <td style="padding: 40px;">
+                            
+                            <div style="background-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 25px; margin-bottom: 25px;">
+                                <h2 style="margin: 0 0 20px 0; color: #1e293b; font-size: 20px; font-weight: 600; display: flex; align-items: center;">
+                                    👤 Información del Contacto
+                                </h2>
+                                
+                                <table role="presentation" style="width: 100%; border-collapse: collapse;">
+                                    <tr>
+                                        <td style="padding: 8px 0; vertical-align: top; width: 80px;">
+                                            <strong style="color: #475569; font-size: 14px;">Nombre:</strong>
+                                        </td>
+                                        <td style="padding: 8px 0;">
+                                            <span style="color: #1e293b; font-size: 16px; font-weight: 500;">${name}</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px 0; vertical-align: top;">
+                                            <strong style="color: #475569; font-size: 14px;">Email:</strong>
+                                        </td>
+                                        <td style="padding: 8px 0;">
+                                            <a href="mailto:${email}" style="color: #3b82f6; text-decoration: none; font-size: 16px; font-weight: 500; border-bottom: 1px solid #3b82f6; padding-bottom: 1px;">
+                                                ${email}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <div style="background-color: #ffffff; border: 2px solid #e5e7eb; border-radius: 12px; padding: 25px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+                                <h3 style="margin: 0 0 15px 0; color: #1e293b; font-size: 18px; font-weight: 600; display: flex; align-items: center;">
+                                    💬 Mensaje
+                                </h3>
+                                <div style="background-color: #f9fafb; border-left: 4px solid #3b82f6; padding: 20px; border-radius: 0 8px 8px 0;">
+                                    <p style="margin: 0; color: #374151; font-size: 16px; line-height: 1.6; white-space: pre-wrap;">
+                                        ${message.replace(/\n/g, '<br>')}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="mailto:${email}?subject=Re: Consulta de trabajo" 
+                                   style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3); transition: all 0.3s ease;">
+                                    📧 Responder Mensaje
+                                </a>
+                            </div>
+                            
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 25px 40px; border-top: 1px solid #e2e8f0;">
+                            <p style="margin: 0; color: #64748b; font-size: 14px; text-align: center; line-height: 1.5;">
+                                💡 <strong>Tip:</strong> Puedes responder directamente a este email para contactar con <strong>${name}</strong>
+                            </p>
+                            <p style="margin: 10px 0 0 0; color: #94a3b8; font-size: 12px; text-align: center;">
+                                Este mensaje fue enviado desde tu formulario de contacto • ${new Date().toLocaleDateString('es-ES', { 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -22,7 +22,7 @@ export class MailService {
   }
 
   private getHtmlTemplate(name: string, email: string, message: string): string {
-    const templatePath = path.join(__dirname, '../templates/email.html');
+    const templatePath = path.join(process.cwd(), 'src', 'templates', 'email.html');
     let html = fs.readFileSync(templatePath, 'utf8');
     html = html
     return html;
