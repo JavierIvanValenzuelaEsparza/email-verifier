@@ -12,9 +12,14 @@ export class MailService {
     private emailQueue: SendMailDto[] = [];
     private isProcessing = false;
     private lastEmailTime = 0;
-    private readonly RATE_LIMIT_DELAY = 2000;
+    private readonly RATE_LIMIT_DELAY = 3000;
     private readonly MAX_RETRIES = 3;
     private readonly BACKOFF_BASE = 5000;
+    
+    private ipRequestCount = new Map<string, { count: number; lastReset: number }>();
+    private emailRequestCount = new Map<string, { count: number; lastReset: number }>();
+    private readonly HOUR_IN_MS = 60 * 60 * 1000;
+    private readonly DAY_IN_MS = 24 * 60 * 60 * 1000;
 
     constructor(private configService: ConfigService) {
         this.transporter = createTransport({
@@ -27,9 +32,12 @@ export class MailService {
             },
             pool: true,
             maxConnections: 1,
-            maxMessages: 100,
-            rateDelta: 1000,
+            maxMessages: 50,
+            rateDelta: 2000,
             rateLimit: 1,
+            connectionTimeout: 60000,
+            greetingTimeout: 30000,
+            socketTimeout: 60000,
         });
 
         this.transporter.verify((error, success) => {
@@ -75,7 +83,7 @@ export class MailService {
             const html = this.getHtmlTemplate(name, email, message);
 
             const result = await this.transporter.sendMail({
-                from: this.configService.get<string>('EMAIL_USER'), // Use authenticated user as sender
+                from: this.configService.get<string>('EMAIL_USER'),
                 to: this.configService.get<string>('EMAIL_TO'),
                 subject: `Nuevo mensaje de ${name} - ${email}`,
                 text: `Has recibido un nuevo mensaje de contacto:\n\nNombre: ${name}\nEmail: ${email}\n\nMensaje:\n${message}`,
@@ -87,22 +95,33 @@ export class MailService {
         } catch (error) {
             this.logger.error(`Failed to send email (attempt ${retryCount + 1}):`, error.message);
 
-            if (error.code === 'EAUTH' || error.responseCode === 454 || error.message.includes('Too many login attempts')) {
+            const isRateLimitError = error.code === 'EAUTH' || 
+                                   error.responseCode === 454 || 
+                                   error.responseCode === 421 ||
+                                   error.responseCode === 450 ||
+                                   error.message.includes('Too many login attempts') ||
+                                   error.message.includes('rate limit') ||
+                                   error.message.includes('temporarily blocked') ||
+                                   error.message.includes('quota exceeded');
+
+            if (isRateLimitError) {
                 if (retryCount < this.MAX_RETRIES) {
-                    const backoffDelay = this.BACKOFF_BASE * Math.pow(2, retryCount); // Exponential backoff
-                    this.logger.warn(`Rate limited. Retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${this.MAX_RETRIES})`);
+                    const backoffDelay = this.BACKOFF_BASE * Math.pow(2, retryCount) + Math.random() * 1000;
+                    this.logger.warn(`Rate limited by email provider. Retrying in ${Math.round(backoffDelay)}ms (attempt ${retryCount + 1}/${this.MAX_RETRIES})`);
                     await this.delay(backoffDelay);
                     return this.sendEmailWithRetry(sendMailDto, retryCount + 1);
                 } else {
+                    this.logger.error(`Email provider rate limit exceeded after ${this.MAX_RETRIES} retries. This may indicate abuse.`);
                     throw new Error(`Failed to send email after ${this.MAX_RETRIES} retries: Rate limit exceeded. Please try again later.`);
                 }
             } else {
+                this.logger.error(`Non-recoverable email error: ${error.message}`);
                 throw new Error(`Failed to send email: ${error.message}`);
             }
         }
     }
 
-    async sendMail(sendMailDto: SendMailDto): Promise<{ message: string; queued?: boolean }> {
+    async sendMail(sendMailDto: SendMailDto, ip: string = 'unknown'): Promise<{ message: string; queued?: boolean }> {
         if (!this.isProcessing) {
             try {
                 await this.sendEmailWithRetry(sendMailDto);
@@ -122,8 +141,8 @@ export class MailService {
         }
     }
 
-    async sendBulkMails(sendMailDtos: SendMailDto[]): Promise<{ message: string; queued: number; failed: number }> {
-        this.logger.log(`Adding ${sendMailDtos.length} emails to queue for bulk processing`);
+    async sendBulkMails(sendMailDtos: SendMailDto[], ip: string = 'unknown'): Promise<{ message: string; queued: number; failed: number }> {
+        this.logger.log(`Adding ${sendMailDtos.length} emails to queue for bulk processing from IP: ${ip}`);
 
         this.emailQueue.push(...sendMailDtos);
         if (!this.isProcessing) {
@@ -163,16 +182,26 @@ export class MailService {
 
         if (failedEmails.length > 0) {
             this.logger.warn(`Queue processing completed with ${failedEmails.length} failed emails`);
-            // Optionally, you could add failed emails back to queue for retry later
         } else {
             this.logger.log('Queue processing completed successfully');
         }
     }
 
-    getQueueStatus(): { queueLength: number; isProcessing: boolean } {
+    getQueueStatus(): { queueLength: number; isProcessing: boolean; activeIPs: number; totalRequestsToday: number } {
+        const now = Date.now();
+        
+        const activeIPs = Array.from(this.ipRequestCount.entries())
+            .filter(([_, data]) => now - data.lastReset < this.HOUR_IN_MS).length;
+        
+        const totalRequestsToday = Array.from(this.emailRequestCount.values())
+            .filter(data => now - data.lastReset < this.DAY_IN_MS)
+            .reduce((sum, data) => sum + data.count, 0);
+        
         return {
             queueLength: this.emailQueue.length,
-            isProcessing: this.isProcessing
+            isProcessing: this.isProcessing,
+            activeIPs,
+            totalRequestsToday
         };
     }
 }
