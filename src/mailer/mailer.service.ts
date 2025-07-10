@@ -21,12 +21,15 @@ export class MailService {
     });
   }
 
-  private getHtmlTemplate(name: string, email: string, message: string): string {
+    private getHtmlTemplate(name: string, email: string, message: string): string {
     const templatePath = path.join(process.cwd(), 'src', 'templates', 'email.html');
     let html = fs.readFileSync(templatePath, 'utf8');
     html = html
+        .replace(/\$\{name\}/g, name)
+        .replace(/\$\{email\}/g, email)
+        .replace(/\$\{message\}/g, message.replace(/\n/g, '<br>'));
     return html;
-  }
+    }
 
   async sendMail(sendMailDto: SendMailDto): Promise<void> {
     const { name, email, message } = sendMailDto;
