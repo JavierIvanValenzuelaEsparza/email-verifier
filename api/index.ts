@@ -2,24 +2,26 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from '../src/app.module';
-import express, { Request, Response } from 'express';
-import { INestApplication } from '@nestjs/common';
+import express from 'express';
 
-const expressApp = express();
-let cachedApp: INestApplication;
+const server = express();
+const expressAdapter = new ExpressAdapter(server);
 
-async function bootstrap() {
-  if (!cachedApp) {
-    const app = await NestFactory.create(
-      AppModule,
-      new ExpressAdapter(expressApp),
+let app: any;
+
+async function createApp() {
+  if (!app) {
+    app = await NestFactory.create(AppModule, expressAdapter, {
+      logger: ['error', 'warn', 'log'],
+    });
+
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
     );
-
-    app.useGlobalPipes(new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }));
 
     app.enableCors({
       origin: true,
@@ -29,12 +31,11 @@ async function bootstrap() {
     });
 
     await app.init();
-    cachedApp = app;
   }
-  return cachedApp;
+  return app;
 }
 
-export default async (req: Request, res: Response) => {
-  await bootstrap();
-  return expressApp(req, res);
+export default async (req: any, res: any) => {
+  await createApp();
+  server(req, res);
 };
