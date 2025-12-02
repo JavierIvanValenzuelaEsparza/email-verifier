@@ -9,8 +9,8 @@ export class SecurityMiddleware implements NestMiddleware {
   private readonly HOUR_IN_MS = 60 * 60 * 1000;
 
   use(req: Request, res: Response, next: NextFunction) {
-    const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
-    const userAgent = req.get('User-Agent') || 'unknown';
+    const ip = (req as any).ip || (req as any).connection?.remoteAddress || (req as any).socket?.remoteAddress || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
     const now = Date.now();
 
     const ipData = this.suspiciousIPs.get(ip);
@@ -27,8 +27,8 @@ export class SecurityMiddleware implements NestMiddleware {
       this.suspiciousIPs.set(ip, { count: 1, firstSeen: now });
     }
 
-    if (req.path.includes('/mail/')) {
-      this.logger.log(`Mail request from IP: ${ip}, Path: ${req.path}, User-Agent: ${userAgent}`);
+    if ((req as any).path?.includes('/mail/')) {
+      this.logger.log(`Mail request from IP: ${ip}, Path: ${(req as any).path}, User-Agent: ${userAgent}`);
     }
 
     if (this.isSuspiciousUserAgent(userAgent)) {
