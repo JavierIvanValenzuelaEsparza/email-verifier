@@ -2,30 +2,39 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { AppModule } from '../src/app.module';
-import express from 'express';
+import express, { Request, Response } from 'express';
+import { INestApplication } from '@nestjs/common';
 
-const server = express();
+const expressApp = express();
+let cachedApp: INestApplication;
 
-export default async (req: any, res: any) => {
-  const app = await NestFactory.create(
-    AppModule,
-    new ExpressAdapter(server),
-  );
+async function bootstrap() {
+  if (!cachedApp) {
+    const app = await NestFactory.create(
+      AppModule,
+      new ExpressAdapter(expressApp),
+    );
 
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+    app.useGlobalPipes(new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }));
 
-  app.enableCors({
-    origin: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  });
+    app.enableCors({
+      origin: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+    });
 
-  await app.init();
+    await app.init();
+    cachedApp = app;
+  }
+  return cachedApp;
+}
 
-  return server(req, res);
+export default async (req: Request, res: Response) => {
+  await bootstrap();
+  return expressApp(req, res);
 };
