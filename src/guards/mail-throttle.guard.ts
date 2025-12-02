@@ -7,13 +7,13 @@ export class MailThrottleGuard extends ThrottlerGuard {
 
   protected async getTracker(req: Record<string, any>): Promise<string> {
     const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress || 'unknown';
-    
+
     const email = req.body?.email;
     if (email) {
       return `${ip}-${email}`;
     }
-    
-    return ip;
+
+    return ip as string;
   }
 
   protected async throwThrottlingException(context: ExecutionContext): Promise<void> {
