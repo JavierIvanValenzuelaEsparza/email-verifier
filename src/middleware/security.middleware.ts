@@ -1,5 +1,4 @@
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
-import { Request, Response, NextFunction } from 'express';
 
 @Injectable()
 export class SecurityMiddleware implements NestMiddleware {
@@ -8,9 +7,9 @@ export class SecurityMiddleware implements NestMiddleware {
   private readonly SUSPICIOUS_THRESHOLD = 20;
   private readonly HOUR_IN_MS = 60 * 60 * 1000;
 
-  use(req: Request, res: Response, next: NextFunction) {
-    const ip = (req as any).ip || (req as any).connection?.remoteAddress || (req as any).socket?.remoteAddress || 'unknown';
-    const userAgent = req.headers['user-agent'] || 'unknown';
+  use(req: any, res: any, next: any) {
+    const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
+    const userAgent = req.headers?.['user-agent'] || 'unknown';
     const now = Date.now();
 
     const ipData = this.suspiciousIPs.get(ip);
@@ -27,8 +26,8 @@ export class SecurityMiddleware implements NestMiddleware {
       this.suspiciousIPs.set(ip, { count: 1, firstSeen: now });
     }
 
-    if ((req as any).path?.includes('/mail/')) {
-      this.logger.log(`Mail request from IP: ${ip}, Path: ${(req as any).path}, User-Agent: ${userAgent}`);
+    if (req.path?.includes('/mail/')) {
+      this.logger.log(`Mail request from IP: ${ip}, Path: ${req.path}, User-Agent: ${userAgent}`);
     }
 
     if (this.isSuspiciousUserAgent(userAgent)) {
