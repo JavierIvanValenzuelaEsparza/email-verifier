@@ -12,10 +12,12 @@ async function bootstrap() {
   }));
   
   app.enableCors({
-    origin: true,
+    origin: process.env.CORS_ORIGIN?.split(',') || '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     credentials: true,
+    optionsSuccessStatus: 200,
+    preflightContinue: false,
   });
   
   await app.listen(process.env.PORT ?? 4000);

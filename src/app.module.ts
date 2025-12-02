@@ -28,7 +28,7 @@ import { ErrorLoggingInterceptor } from './interceptors/error-logging.intercepto
         rejectUnauthorized: true,
       },
       autoLoadEntities: true,
-      synchronize: true,
+      synchronize: process.env.NODE_ENV !== 'production',
     }),
 
     TestimonialsModule,
