@@ -1,41 +1,25 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import { AppModule } from '../src/app.module';
-import express from 'express';
-
-const server = express();
-const expressAdapter = new ExpressAdapter(server);
-
-let app: any;
-
-async function createApp() {
-  if (!app) {
-    app = await NestFactory.create(AppModule, expressAdapter, {
-      logger: ['error', 'warn', 'log'],
-    });
-
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    );
-
-    app.enableCors({
-      origin: true,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-      credentials: true,
-    });
-
-    await app.init();
-  }
-  return app;
-}
-
 export default async (req: any, res: any) => {
-  await createApp();
-  server(req, res);
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.status(200).send(`
+    🎉 ¡Bienvenido a Email Verifier API! 🎉
+    
+    ═══════════════════════════════════════
+    📧 Tu solución completa para emails 📧
+    ═══════════════════════════════════════
+    
+    ✨ Características principales:
+    • Verificación de emails en tiempo real
+    • Envío de emails individuales y masivos
+    • Rate limiting y seguridad avanzada
+    • Monitoreo y logging completo
+    
+    🚀 ¡Comienza a usar la API ahora mismo!
+    
+    📚 Endpoints disponibles:
+    • GET /api/info - Información de la API
+    • GET /api/health - Estado del servicio
+    • POST /api/mailer/send - Enviar email individual
+    • POST /api/mailer/send-bulk - Enviar emails masivos
+    • POST /api/mailer/verify - Verificar dirección de email
+  `);
 };
